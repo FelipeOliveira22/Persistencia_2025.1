@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 from app.models.equipe import Equipe
 from app.database import engine
 
-router = APIRouter(prefix="/equipes", tags=["Equipes"])
+router = APIRouter(prefix="/equipes", tags=["Equipe"])
 
 @router.post("/", response_model=Equipe)
 def create_equipe(equipe: Equipe):
@@ -18,18 +18,30 @@ def read_equipes():
     with Session(engine) as session:
         return session.exec(select(Equipe)).all()
 
-@router.get("/{equipe_id}", response_model=Equipe)
-def read_equipe(equipe_id: int):
+@router.get("/{id}", response_model=Equipe)
+def read_equipe_by_id(id: int):
     with Session(engine) as session:
-        equipe = session.get(Equipe, equipe_id)
+        equipe = session.get(Equipe, id)
         if not equipe:
             raise HTTPException(status_code=404, detail="Equipe não encontrada")
         return equipe
 
-@router.delete("/{equipe_id}")
-def delete_equipe(equipe_id: int):
+@router.put("/{id}", response_model=Equipe)
+def update_equipe(id: int, dados: Equipe):
     with Session(engine) as session:
-        equipe = session.get(Equipe, equipe_id)
+        equipe = session.get(Equipe, id)
+        if not equipe:
+            raise HTTPException(status_code=404, detail="Equipe não encontrada")
+        for key, value in dados.dict().items():
+            setattr(equipe, key, value)
+        session.commit()
+        session.refresh(equipe)
+        return equipe
+
+@router.delete("/{id}")
+def delete_equipe(id: int):
+    with Session(engine) as session:
+        equipe = session.get(Equipe, id)
         if not equipe:
             raise HTTPException(status_code=404, detail="Equipe não encontrada")
         session.delete(equipe)
